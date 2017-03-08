@@ -9,5 +9,7 @@ namespace MusicFileManager
     interface IFile
     {
         void Load(string filepath);
+        void SaveThumb();
+        void LoadThumb();
     }
 }

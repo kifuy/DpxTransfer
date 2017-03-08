@@ -15,7 +15,7 @@ namespace MusicFileManager
 
         public override string ToString()
         {
-            string ret = "";
+            string ret = "[metadata]";
             ret += "Album:" + (string.Join(", ", Tag.Album)) + "\r\n";
             ret += "AlbumArtists:" + (string.Join(", ", Tag.AlbumArtists)) + "\r\n";
             ret += "AlbumArtistsSort:" + (string.Join(", ", Tag.AlbumArtistsSort)) + "\r\n";
@@ -63,14 +63,47 @@ namespace MusicFileManager
             ret += "TrackCount:" + (string.Join(", ", Tag.TrackCount)) + "\r\n";
             ret += "Year:" + (string.Join(", ", Tag.Year)) + "\r\n";
 
+            ret += "[Properties]\r\n";
+            ret += "AudioBitrate:" + Properties.AudioBitrate + "\r\n";
+            ret += "AudioChannels:" + Properties.AudioChannels + "\r\n";
+            ret += "AudioSampleRate:" + Properties.AudioSampleRate+ "\r\n";
+            ret += "BitsPerSample:" + Properties.BitsPerSample+ "\r\n";
+            ret += "Codecs:" + (string.Join(", ",  Properties.Codecs))+ "\r\n";
+            ret += "Description:" + Properties.Description+ "\r\n";
+            ret += "Duration:" + Properties.Duration+ "\r\n";
+            ret += "MediaTypes:" + Properties.MediaTypes+ "\r\n";
+            ret += "PhotoHeight:" + Properties.PhotoHeight+ "\r\n";
+            ret += "PhotoWidth:" + Properties.PhotoWidth+ "\r\n";
+            ret += "PhotoQuality:" + Properties.PhotoQuality+ "\r\n";
+            ret += "VideoHeight:" + Properties.VideoHeight+ "\r\n";
+            ret += "VideoWidth:" + Properties.VideoWidth+ "\r\n";
+
             return ret;
         }
+        public TagLib.Properties Properties { get; set; }
 
         public void Load(string filepath)
         {
-            TagLib.File f = TagLib.File.Create(filepath);
+            TagLib.File f = TagLib.File.Create(filepath, TagLib.ReadStyle.Average);
             Tag = f.Tag;
+            Properties = f.Properties;
+
+            SaveThumb();
             f.Dispose();
+        }
+
+        public void SaveThumb()
+        {
+            int filepathHash = Filepath.GetHashCode();
+            foreach (TagLib.IPicture pic in Tag.Pictures)
+            {
+                pic.GetHashCode();
+            }
+        }
+
+        public void LoadThumb()
+        {
+            throw new NotImplementedException();
         }
     }
 }

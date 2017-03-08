@@ -21,6 +21,10 @@ namespace MusicFileManager
                     Flac flac = new Flac();
                     flac.Load(f);
                     Console.WriteLine(flac.ToString());
+                    System.Xml.Serialization.XmlSerializer ser = new System.Xml.Serialization.XmlSerializer(typeof(Flac));
+                    System.IO.StreamWriter sw = new System.IO.StreamWriter("test.xml", false, new System.Text.UTF8Encoding(false));
+                    ser.Serialize(sw, flac);
+                    sw.Close();
                 }
             }
         }
