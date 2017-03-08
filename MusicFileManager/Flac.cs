@@ -84,6 +84,7 @@ namespace MusicFileManager
 
         public void Load(string filepath)
         {
+            Filepath = filepath;
             TagLib.File f = TagLib.File.Create(filepath, TagLib.ReadStyle.Average);
             Tag = f.Tag;
             Properties = f.Properties;
@@ -92,18 +93,31 @@ namespace MusicFileManager
             f.Dispose();
         }
 
-        public void SaveThumb()
+        private StringBuilder GetThumbPath()
         {
-            int filepathHash = Filepath.GetHashCode();
+            if (Tag.Pictures.Length == 0) return null;
+            StringBuilder targetFilePath = null;
+            int idx = 0;
             foreach (TagLib.IPicture pic in Tag.Pictures)
             {
-                pic.GetHashCode();
+                if(pic.Type == TagLib.PictureType.FrontCover)
+                {
+                    targetFilePath = new StringBuilder(Filepath.GetHashCode().ToString("x")).Append("_").Append(idx.ToString()).Append(".jpg");
+                    idx++;
+                    System.IO.BinaryWriter bw = new System.IO.BinaryWriter(System.IO.File.Open(targetFilePath.ToString(), System.IO.FileMode.Create));
+                    bw.Write(pic.Data.Data);
+                    bw.Close();
+                }
             }
+            return targetFilePath;
+        }
+        public void SaveThumb()
+        {
+            StringBuilder sb = GetThumbPath();
         }
 
         public void LoadThumb()
         {
-            throw new NotImplementedException();
         }
     }
 }
