@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MusicFileManager
 {
-    interface IFile
+    public interface IFile
     {
         void Load(string filepath);
         void SaveThumb();

@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace MusicFileManager
 {
-    public class Flac : IFile
+    [Serializable]
+    public class Flac : IFile, ISerializable
     {
+        const string ThumbFileDir = "./Thumbs/";
+
         public string Filepath { get; private set; }
 
         public TagLib.Tag Tag { get; private set; }
@@ -62,6 +66,7 @@ namespace MusicFileManager
             ret += "Track:" + (string.Join(", ", Tag.Track)) + "\r\n";
             ret += "TrackCount:" + (string.Join(", ", Tag.TrackCount)) + "\r\n";
             ret += "Year:" + (string.Join(", ", Tag.Year)) + "\r\n";
+            ret += "PicThumb:" + GetThumbPath() + "\r\n";
 
             ret += "[Properties]\r\n";
             ret += "AudioBitrate:" + Properties.AudioBitrate + "\r\n";
@@ -93,31 +98,84 @@ namespace MusicFileManager
             f.Dispose();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         private StringBuilder GetThumbPath()
         {
             if (Tag.Pictures.Length == 0) return null;
             StringBuilder targetFilePath = null;
-            int idx = 0;
             foreach (TagLib.IPicture pic in Tag.Pictures)
             {
                 if(pic.Type == TagLib.PictureType.FrontCover)
                 {
-                    targetFilePath = new StringBuilder(Filepath.GetHashCode().ToString("x")).Append("_").Append(idx.ToString()).Append(".jpg");
-                    idx++;
-                    System.IO.BinaryWriter bw = new System.IO.BinaryWriter(System.IO.File.Open(targetFilePath.ToString(), System.IO.FileMode.Create));
-                    bw.Write(pic.Data.Data);
-                    bw.Close();
+                    targetFilePath = new StringBuilder(ThumbFileDir);
+                    targetFilePath.Append(Filepath.GetHashCode().ToString("x"));
+                    // 拡張子決定
+                    targetFilePath.Append(".").Append(pic.MimeType.Substring(6));
                 }
             }
             return targetFilePath;
         }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
         public void SaveThumb()
         {
             StringBuilder sb = GetThumbPath();
+            if (sb == null) return;
+            // 最も小さいものをサムネイルとして保存する
+            int minDataSize = int.MaxValue;
+            TagLib.IPicture targetPic = null;
+            foreach (TagLib.IPicture pic in Tag.Pictures)
+            {
+                if(pic.Data.Count < minDataSize)
+                {
+                    minDataSize = pic.Data.Count;
+                    targetPic = pic;
+                }
+            }
+            if (targetPic == null) return;
+            string strPath = sb.ToString();
+            if (!System.IO.Directory.Exists(ThumbFileDir))
+            {
+                System.IO.Directory.CreateDirectory(ThumbFileDir);
+            }
+            System.IO.BinaryWriter bw = new System.IO.BinaryWriter(System.IO.File.Open(strPath, System.IO.FileMode.Create));
+            bw.Write(targetPic.Data.Data);
+            bw.Close();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void LoadThumb()
         {
+            StringBuilder sb = GetThumbPath();
+            string strPath = sb.ToString();
+            if (!System.IO.Directory.Exists(ThumbFileDir))
+            {
+                return;
+            }
+            System.IO.BinaryReader br = new System.IO.BinaryReader(System.IO.File.Open(sb.ToString(), System.IO.FileMode.Open));
+            Console.WriteLine("FileSize: {0}byte" ,br.BaseStream.Length);
+            br.Close();
+        }
+
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue(nameof(Tag) + "." + nameof(Tag.Album), Tag.Album);
+            info.AddValue("Tag.AlbumArtists", Tag.AlbumArtists);
+            info.AddValue("Tag.AlbumArtistsSort", Tag.AlbumArtistsSort);
+            info.AddValue("Tag.AlbumSort", Tag.AlbumSort);
+            info.AddValue("Tag.AmazonId", Tag.AmazonId);
+            info.AddValue("Tag.Artists", Tag.Artists);
+            var name = nameof(Tag.AmazonId);
+
+            info.AddValue("Properties.AudioBitrate", Properties.AudioBitrate);
         }
     }
 }
